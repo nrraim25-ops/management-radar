@@ -219,7 +219,7 @@ def get_source_by_id(source_id: int) -> dict:
 
 
 # ── Header ────────────────────────────────────────────────────────────────────
-st.markdown("""
+st.html("""
 <div class="radar-header">
   <div style="font-size:2.5rem">📡</div>
   <div>
@@ -227,17 +227,17 @@ st.markdown("""
     <p>Track management signals from BSE filings &amp; leadership interviews · Powered by HDFC AMC Research</p>
   </div>
 </div>
-""", unsafe_allow_html=True)
+""")
 
 # ── Pipeline not run warning ───────────────────────────────────────────────────
 if not is_db_ready():
-    st.markdown("""
+    st.html("""
     <div class="warning-banner">
-      ⚠️ <strong>Pipeline not yet run.</strong>
+      &#9888; <strong>Pipeline not yet run.</strong>
       The database is empty or missing. Run the pipeline first:<br><br>
       <code>python scripts/run_pipeline.py</code>
     </div>
-    """, unsafe_allow_html=True)
+    """)
     st.stop()
 
 # Ensure schema exists (in case DB file is there but uninitialized)
@@ -271,7 +271,7 @@ col_timeline, col_chat = st.columns([5, 4], gap="large")
 
 # ── Timeline ──────────────────────────────────────────────────────────────────
 with col_timeline:
-    st.markdown(f'<div class="section-title">📅 Disclosure Timeline — {selected_company}</div>', unsafe_allow_html=True)
+    st.html(f'<div class="section-title">&#128197; Disclosure Timeline — {selected_company}</div>')
 
     sources = get_sources_for_company(selected_company_id)
 
@@ -302,15 +302,15 @@ with col_timeline:
                 chips = "".join(f'<span class="tag-chip">{t}</span>' for t in tag_list)
                 tags_html = f'<div style="margin-top:0.5rem">{chips}</div>'
 
-            st.markdown(f"""
+            card_html = f"""
             <div class="{card_cls}">
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem">
+              <div style="display:flex;align-items:flex-start;gap:1rem">
                 <div style="flex:1">
                   <div style="font-weight:600;color:#0B1F3A;font-size:0.95rem;line-height:1.4">{s["title"]}</div>
                   <div style="font-size:0.8rem;color:#6b7a8d;margin-top:0.25rem">
                     <span class="badge {badge_cls}">{badge_label}</span>
                     {fail_html}
-                    {date_str}
+                    &nbsp;{date_str}
                   </div>
                 </div>
               </div>
@@ -318,12 +318,13 @@ with col_timeline:
               {tags_html}
               {fail_detail}
             </div>
-            """, unsafe_allow_html=True)
+            """
+            st.html(card_html)
 
 
 # ── Chat ──────────────────────────────────────────────────────────────────────
 with col_chat:
-    st.markdown(f'<div class="section-title">💬 Ask About {selected_company}</div>', unsafe_allow_html=True)
+    st.html(f'<div class="section-title">&#128172; Ask About {selected_company}</div>')
 
     if not GEMINI_API_KEY:
         st.warning("⚠️ GEMINI_API_KEY not set. Add it to `.env` to enable chat.")
@@ -356,9 +357,9 @@ with col_chat:
                     a_html += f'<div style="margin-top:0.4rem">{cit_chips}</div>'
                 chat_html += q_html + a_html
             chat_html += "</div>"
-            st.markdown(chat_html, unsafe_allow_html=True)
+            st.html(chat_html)
         else:
-            st.markdown('<div class="chat-container" style="display:flex;align-items:center;justify-content:center;color:#9aa5b4;font-size:0.9rem">Ask a question about this company\'s disclosures...</div>', unsafe_allow_html=True)
+            st.html('<div class="chat-container" style="display:flex;align-items:center;justify-content:center;color:#9aa5b4;font-size:0.9rem">Ask a question about this company\'s disclosures...</div>')
 
         # Input
         with st.form(key=f"chat_form_{selected_company_id}", clear_on_submit=True):
@@ -409,9 +410,8 @@ with col_chat:
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("---")
-st.markdown(
+st.html(
     '<div style="text-align:center;color:#9aa5b4;font-size:0.8rem">'
     "Management Radar · HDFC AMC Intern Challenge · Answers are grounded in indexed disclosures only"
-    "</div>",
-    unsafe_allow_html=True,
+    "</div>"
 )
