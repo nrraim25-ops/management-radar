@@ -10,7 +10,7 @@ load_dotenv(_ROOT / ".env")
 
 # ── LLM ──────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL: str = "gemini-1.5-flash"   # free-tier model
+GEMINI_MODEL: str = "gemini-3.6-flash"   # current free-tier model, google-genai v2
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 DATA_DIR = _ROOT / "data"

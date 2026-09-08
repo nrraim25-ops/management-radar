@@ -72,7 +72,7 @@ def _chunk_pdf(source_id: int, path: Path) -> None:
             })
 
     if not chunks:
-        print(f"[ingest] ⚠ source {source_id} yielded no text chunks")
+        print(f"[ingest] WARNING: source {source_id} yielded no text chunks")
         return
 
     with get_conn() as conn:

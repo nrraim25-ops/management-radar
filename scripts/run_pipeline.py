@@ -82,7 +82,7 @@ def main():
     print("=" * 60)
 
     if not GEMINI_API_KEY:
-        print("\n⚠️  WARNING: GEMINI_API_KEY not set in .env — tagging will fail.")
+        print("\n[WARNING] GEMINI_API_KEY not set in .env -- tagging will fail.")
         print("   Set the key in .env and re-run to complete tagging + RAG.\n")
 
     # Ensure DB + schema exist

@@ -1,10 +1,12 @@
 """src/tagging.py — LLM-based summarisation and tagging of sources (one call per source)."""
 
 import json
+import re
 import time
 from datetime import datetime, timezone
 
-import google.generativeai as genai
+import google.genai as genai
+from google.genai import types
 
 from src.config import (
     GEMINI_API_KEY,
@@ -44,13 +46,15 @@ def _now() -> str:
 
 def _call_gemini_with_backoff(prompt: str) -> dict:
     """Call Gemini with retry-on-429 backoff. Returns parsed JSON dict."""
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel(GEMINI_MODEL)
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     last_exc = None
     for attempt in range(TAG_MAX_RETRIES):
         try:
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+            )
             raw = response.text.strip()
 
             # Strip markdown code fences if present
@@ -84,8 +88,6 @@ def _call_gemini_with_backoff(prompt: str) -> dict:
 
 def tag_all_sources() -> None:
     """Tag all sources that don't yet have a source_tags row."""
-    import re  # local import to avoid circular
-
     with get_conn() as conn:
         rows = conn.execute(
             """
@@ -116,7 +118,7 @@ def tag_all_sources() -> None:
                 ).fetchall()
 
             if not chunks:
-                print(f"[tagging] ⚠ source {source_id} has no chunks, skipping")
+                print(f"[tagging] WARNING: source {source_id} has no chunks, skipping")
                 continue
 
             full_text = "\n\n".join(c["text"] for c in chunks)

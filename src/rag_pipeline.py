@@ -5,7 +5,7 @@ import re
 import time
 from datetime import datetime, timezone
 
-import google.generativeai as genai
+import google.genai as genai
 
 from src.config import (
     GEMINI_API_KEY,
@@ -24,13 +24,15 @@ def _now() -> str:
 
 def _call_gemini(prompt: str) -> str:
     """Call Gemini with backoff on 429. Returns raw text."""
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel(GEMINI_MODEL)
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     last_exc = None
     for attempt in range(TAG_MAX_RETRIES):
         try:
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+            )
             return response.text.strip()
         except Exception as exc:
             err_str = str(exc).lower()

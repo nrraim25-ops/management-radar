@@ -82,7 +82,7 @@ def _chunk_transcript(source_id: int, path: Path) -> None:
         })
 
     if not chunks:
-        print(f"[chunk_youtube] ⚠ source {source_id} yielded no chunks")
+        print(f"[chunk_youtube] WARNING: source {source_id} yielded no chunks")
         return
 
     with get_conn() as conn:

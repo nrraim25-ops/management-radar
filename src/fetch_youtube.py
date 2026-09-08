@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
+from youtube_transcript_api import YouTubeTranscriptApi
 
 from src.config import TRANSCRIPT_DIR
 from src.db import get_conn
@@ -29,8 +29,32 @@ def _extract_video_id(url: str) -> str:
     raise ValueError(f"Cannot extract video ID from URL: {url}")
 
 
+def _transcript_to_list(transcript) -> list[dict]:
+    """
+    Convert transcript to a list of {text, start, duration} dicts.
+    Handles both old API (returns list) and new v1.x API (returns FetchedTranscript object).
+    """
+    result = []
+    for item in transcript:
+        # New v1.x API: item is a Snippet object with attributes
+        if hasattr(item, 'text'):
+            result.append({
+                "text": item.text,
+                "start": float(item.start),
+                "duration": float(getattr(item, 'duration', 0.0)),
+            })
+        else:
+            # Old API: item is already a dict
+            result.append({
+                "text": str(item.get("text", "")),
+                "start": float(item.get("start", 0.0)),
+                "duration": float(item.get("duration", 0.0)),
+            })
+    return result
+
+
 def fetch_all_transcripts() -> None:
-    """Fetch transcripts for all pending YouTube sources. Idempotent."""
+    """Fetch transcripts for all pending/failed YouTube sources. Idempotent."""
     with get_conn() as conn:
         rows = conn.execute(
             "SELECT id, url, local_path, fetch_status FROM sources WHERE source_type='youtube'"
@@ -60,19 +84,23 @@ def fetch_all_transcripts() -> None:
 def _fetch_transcript(source_id: int, url: str, dest: Path) -> None:
     try:
         video_id = _extract_video_id(url)
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
-        # transcript is a list of {text, start, duration}
+
+        # youtube-transcript-api v1.x: fetch() is an instance method
+        try:
+            ytt = YouTubeTranscriptApi()
+            transcript_raw = ytt.fetch(video_id)
+        except (AttributeError, TypeError):
+            # Fallback for older versions where it was a class method
+            transcript_raw = YouTubeTranscriptApi.get_transcript(video_id)  # type: ignore
+
+        transcript = _transcript_to_list(transcript_raw)
         dest.write_text(json.dumps(transcript, ensure_ascii=False, indent=2), encoding="utf-8")
         _mark_ok(source_id, str(dest))
-        print(f"[fetch_youtube] ✓ source {source_id} transcript saved ({len(transcript)} lines)")
-
-    except (TranscriptsDisabled, NoTranscriptFound) as exc:
-        _mark_failed(source_id, f"No transcript available: {exc}")
-        print(f"[fetch_youtube] ✗ source {source_id} no transcript: {exc}")
+        print(f"[fetch_youtube] source {source_id} transcript saved ({len(transcript)} lines)")
 
     except Exception as exc:
         _mark_failed(source_id, str(exc))
-        print(f"[fetch_youtube] ✗ source {source_id} failed: {exc}")
+        print(f"[fetch_youtube] source {source_id} failed: {exc}")
 
 
 def _mark_ok(source_id: int, local_path: str) -> None:
