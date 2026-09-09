@@ -124,4 +124,4 @@ This system ingests content from BSE PDFs and YouTube transcripts — content au
 
 ## Demo Recording
 
-*(Link or attachment to 3-minute recording — to be added at submission)*
+[Watch the 3-minute demo on Google Drive](https://drive.google.com/file/d/1KOsJkDXt5-TkUg9tTkdSuhvRr2-NKnWm/view?usp=sharing)
